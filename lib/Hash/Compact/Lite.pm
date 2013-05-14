@@ -11,9 +11,10 @@ our @EXPORT = qw/hash_compact hash_uncompact/;
 
 sub hash_compact {
     my ($orig, $dict) = @_;
-    $dict ||= +{};
 
-    my $compact = _hash_compact($orig, $dict, _gen_keygen());
+    my $compact = defined($dict) ?
+        _hash_compact($orig, $dict = +{ %$dict }, sub { $_[0] }):
+        _hash_compact($orig, $dict = +{},         _gen_keygen());
     return +{
         data => $compact,
         dict => $dict,
@@ -22,7 +23,7 @@ sub hash_compact {
 
 sub hash_uncompact {
     my $compressed = shift;
-    return _hash_uncompact($compressed->{data}, $compressed->{dict});
+    return _hash_uncompact($compressed->{data}, +{ reverse %{$compressed->{dict}} });
 }
 
 sub _hash_uncompact {
@@ -37,9 +38,8 @@ sub _hash_uncompact {
 
     my %orig;
     for my $key (keys %$compact) {
-        my $orig_key = $dict->{$key} or die "unknown key: $key";
-        my $value = $compact->{$key};
-        $orig{$orig_key} = $uncompact_value->($value);
+        my $orig_key = exists $dict->{$key} ? $dict->{$key} : $key;
+        $orig{$orig_key} = $uncompact_value->( $compact->{$key} );
     }
 
     undef $uncompact_value;
@@ -77,14 +77,11 @@ sub _hash_compact {
 
     my %compact;
     for my $orig_key (keys %$orig) {
-        my %rev_dict = reverse %$dict;
-        my $key = exists $rev_dict{$orig_key} ? $rev_dict{$orig_key} : do {
-            my $compact_key = $keygen->();
-            $dict->{$compact_key} = $orig_key;
-            $compact_key;
+        my $key = exists $dict->{$orig_key} ? $dict->{$orig_key} : do {
+            my $compact_key = $keygen->($orig_key);
+            ($orig_key ne $compact_key) ? $dict->{$orig_key} = $compact_key : $compact_key;
         };
-        my $value = $orig->{$orig_key};
-        $compact{$key} = $compact_value->($value);
+        $compact{$key} = $compact_value->( $orig->{$orig_key} );
     }
 
     undef $compact_value;

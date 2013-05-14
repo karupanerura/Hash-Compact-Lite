@@ -54,5 +54,16 @@
       }
    },
    "release_status" : "unstable",
+   "resources" : {
+      "bugtracker" : {
+         "web" : "https://github.com/karupanerura/Hash-Compact-Lite/issues"
+      },
+      "homepage" : "https://github.com/karupanerura/Hash-Compact-Lite",
+      "repository" : {
+         "type" : "git",
+         "url" : "git://github.com/karupanerura/Hash-Compact-Lite.git",
+         "web" : "https://github.com/karupanerura/Hash-Compact-Lite"
+      }
+   },
    "version" : "0.01"
 }
